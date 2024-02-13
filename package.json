@@ -1,0 +1,21 @@
+{
+  "name": "paymaster",
+  "version": "1.0.0",
+  "description": "Assistant in calculating the check",
+  "main": "src/app.ts",
+  "repository": "git@github.com:kptlr/paymaster.git",
+  "author": "Petr Belyakov",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start":"node dist/app.js",
+    "dev": "ts-node src/app.ts" 
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}
