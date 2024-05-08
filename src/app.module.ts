@@ -7,6 +7,9 @@ import { BotModule } from './bot/bot.module';
 import databaseConfig from './config/database.config';
 import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
+import { User } from './user/user.entity';
+import { Bill } from './bill/bill.entity';
+import { Position } from './bill/position.entity';
 
 @Module({
   imports: [
@@ -26,7 +29,7 @@ import { UserModule } from './user/user.module';
           synchronize: false,
           migrationsTableName: 'migrations',
           migrations: ['dist/migrations/*{.ts,.js}'],
-          entities: [],
+          entities: [User, Bill, Position],
           cli: {
             migrationsDir: 'migrations',
           },
