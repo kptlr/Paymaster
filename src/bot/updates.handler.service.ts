@@ -24,22 +24,9 @@ import { UserDto } from 'src/user/user.create.dto';
 export class UpdatesHandlerService {
   @Inject() private readonly billService: BillService;
   @Inject() private readonly userService: UserService;
-  @Command('start')
-  async start(
-    @Sender('first_name') firstName: string,
-    @Sender('last_name') lastName: string,
-    @Sender('username') username: string,
-    @Sender('id') telegramId: number,
-    @Ctx() ctx: Context,
-  ): Promise<void> {
-    await this.userService.getOrCreateUserByTgId(
-      new UserDto(telegramId, firstName, lastName, username),
-    );
-    await ctx.replyWithMarkdownV2(GREETING_TEXT);
-  }
 
-  @Command('help')
-  async help(
+  @Command(['start', 'help'])
+  async start(
     @Sender('first_name') firstName: string,
     @Sender('last_name') lastName: string,
     @Sender('username') username: string,
@@ -89,7 +76,6 @@ export class UpdatesHandlerService {
       ctx.reply(BILL_NOT_OPENED_ERROR);
       return;
     }
-    //todo Генерим счет
     ctx.reply(await this.billService.closeBill(user.id));
     ctx.reply(BILL_CLOSED);
   }
