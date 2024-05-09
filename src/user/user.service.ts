@@ -34,6 +34,24 @@ export class UserService {
   }
 
   /**
+   * Возвращает пользователя по его идентификатору
+   *
+   * @param userId идентификатор пользователя
+   * @returns пользователь
+   */
+  async getUserById(userId: number): Promise<User> {
+    return await this.userRepository.findOneBy({ id: userId });
+  }
+
+  async getUsersByUserIds(userIds: Set<number>): Promise<User[]> {
+    const users = [];
+    for (const userId of userIds) {
+      users.push(await this.getUserById(userId));
+    }
+    return users;
+  }
+
+  /**
    * Возвращает счетчик зарегистрированных пользователей в боте
    *
    * @returns счетчик пользователей

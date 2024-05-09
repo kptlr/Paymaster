@@ -14,6 +14,9 @@ export class Position extends BaseEntity {
   @Column('real', { name: 'price', nullable: false })
   price: number;
 
+  @Column('int8', { name: 'user_id', nullable: false })
+  userId: number;
+
   @Column({
     name: 'created_at',
     nullable: false,

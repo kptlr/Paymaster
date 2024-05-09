@@ -9,6 +9,9 @@ export class Bill extends BaseEntity {
   @Column('int8', { name: 'user_id', nullable: false })
   userId: number;
 
+  @Column('int8', { name: 'chat_id', nullable: false })
+  chatId: number;
+
   @Column('varchar', { name: 'state', length: 20, nullable: false })
   state: BillState;
 

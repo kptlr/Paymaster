@@ -18,6 +18,7 @@ import { BillService } from 'src/bill/bill.service';
 import { PositionDto } from 'src/bill/position.dto';
 import { UserService } from 'src/user/user.service';
 import { UserDto } from 'src/user/user.create.dto';
+import { ChatId } from 'src/common/decorators/chat-id.decorator';
 
 @Update()
 @UseFilters(TelegrafExceptionFilter)
@@ -25,12 +26,18 @@ export class UpdatesHandlerService {
   @Inject() private readonly billService: BillService;
   @Inject() private readonly userService: UserService;
 
+  private epifan: string[] = [
+    'CAACAgIAAxkBAAM_ZjqWt73vAu1_XBNs2nmobUB8X50AAvYAA0C9tgZXvT8OeLBq4DUE',
+    'CAACAgIAAxkBAANAZjqW1ZatUr7rMwTEBMmr7w_gzEIAAvUAA0C9tgY67925SJpPgDUE',
+  ];
+
   @Command(['start', 'help'])
   async start(
     @Sender('first_name') firstName: string,
     @Sender('last_name') lastName: string,
     @Sender('username') username: string,
     @Sender('id') telegramId: number,
+    @ChatId() chatId: number,
     @Ctx() ctx: Context,
   ): Promise<void> {
     await this.userService.getOrCreateUserByTgId(
@@ -47,16 +54,17 @@ export class UpdatesHandlerService {
     @Sender('last_name') lastName: string,
     @Sender('username') username: string,
     @Sender('id') telegramId: number,
+    @ChatId() chatId: number,
   ): Promise<string> {
     const user = await this.userService.getOrCreateUserByTgId(
       new UserDto(telegramId, firstName, lastName, username),
     );
 
-    if (await this.billService.hasOpenedBill(user.id)) {
+    if (await this.billService.hasOpenedBill(chatId)) {
       return NEW_BILL_ERROR;
     }
 
-    await this.billService.createBill(user.id);
+    await this.billService.createBill(user.id, chatId);
     return NEW_BILL_TEXT;
   }
 
@@ -67,16 +75,17 @@ export class UpdatesHandlerService {
     @Sender('last_name') lastName: string,
     @Sender('username') username: string,
     @Sender('id') telegramId: number,
+    @ChatId() chatId: number,
     @Ctx() ctx: Context,
   ): Promise<void> {
     const user = await this.userService.getOrCreateUserByTgId(
       new UserDto(telegramId, firstName, lastName, username),
     );
-    if (!(await this.billService.hasOpenedBill(user.id))) {
+    if (!(await this.billService.hasOpenedBill(chatId))) {
       ctx.reply(BILL_NOT_OPENED_ERROR);
       return;
     }
-    ctx.reply(await this.billService.closeBill(user.id));
+    ctx.replyWithHTML(await this.billService.closeBill(chatId, user));
     ctx.reply(BILL_CLOSED);
   }
 
@@ -87,14 +96,17 @@ export class UpdatesHandlerService {
     @Sender('last_name') lastName: string,
     @Sender('username') username: string,
     @Sender('id') telegramId: number,
-  ): Promise<string> {
+    @ChatId() chatId: number,
+    @Ctx() ctx: Context,
+  ): Promise<void> {
     const user = await this.userService.getOrCreateUserByTgId(
       new UserDto(telegramId, firstName, lastName, username),
     );
-    if (!(await this.billService.hasOpenedBill(user.id))) {
-      return BILL_NOT_OPENED_ERROR;
+    if (!(await this.billService.hasOpenedBill(chatId))) {
+      ctx.reply(BILL_NOT_OPENED_ERROR);
+      return;
     }
-    return `${await this.billService.calcBill(user.id)}`;
+    await ctx.replyWithHTML(`${await this.billService.calcBill(chatId, user)}`);
   }
 
   @Command('admin')
@@ -121,20 +133,24 @@ export class UpdatesHandlerService {
     @Sender('username') username: string,
     @Sender('id') telegramId: number,
     @Message('text') text: string,
+    @ChatId() chatId: number,
     @Ctx() ctx: Context,
   ): Promise<void> {
     const user = await this.userService.getOrCreateUserByTgId(
       new UserDto(telegramId, firstName, lastName, username),
     );
-    if (!(await this.billService.hasOpenedBill(user.id))) {
+    if (!(await this.billService.hasOpenedBill(chatId))) {
       ctx.reply(ADD_POSITION_ERROR);
       return;
     }
     try {
       const position = PositionDto.from(text);
-      await this.billService.addPosition(user.id, position);
+
+      const stickerId = Math.floor(Math.random() * this.epifan.length);
+      await ctx.replyWithSticker(this.epifan[stickerId]);
+
       ctx.replyWithHTML(
-        `👌 Запись добавлена. \n 💰 Общий счет составляет <b>${await this.billService.calcCurrentBillAmount(user.id)}</b> денег`,
+        await this.billService.addPosition(chatId, user, position),
       );
     } catch (error) {
       ctx.replyWithMarkdownV2(INCORRECT_POSITION_FORMAT);
