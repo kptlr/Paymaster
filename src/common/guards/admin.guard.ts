@@ -10,7 +10,6 @@ export class AdminGuard implements CanActivate {
   );
 
   canActivate(context: ExecutionContext): boolean {
-    console.log(this.ADMIN_IDS);
     const ctx = TelegrafExecutionContext.create(context);
     const { from } = ctx.getContext<Context>();
 
