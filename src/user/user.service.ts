@@ -10,6 +10,12 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) {}
 
+  /**
+   * Получает или создает пользователя по telegramId
+   *
+   * @param userDto информация о пользователе
+   * @returns внутренний пользователь бота
+   */
   async getOrCreateUserByTgId(userDto: UserDto): Promise<User> {
     const user = await this.userRepository.findOneBy({
       telegramId: userDto.telegramId,
@@ -25,5 +31,14 @@ export class UserService {
       return this.userRepository.save(user);
     }
     return user;
+  }
+
+  /**
+   * Возвращает счетчик зарегистрированных пользователей в боте
+   *
+   * @returns счетчик пользователей
+   */
+  async getUsersCount(): Promise<number> {
+    return await this.userRepository.count();
   }
 }

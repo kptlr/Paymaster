@@ -130,4 +130,13 @@ export class BillService {
       ' 💰.'
     );
   }
+
+  /**
+   * Возвращает счетчик счетов в базе данных
+   *
+   * @returns количество счетов в базе данных
+   */
+  async getBillsCount(): Promise<number> {
+    return await this.billRepository.count();
+  }
 }
