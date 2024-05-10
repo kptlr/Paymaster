@@ -60,7 +60,8 @@ export class BillService {
     const positions = await this.positionRepository.findBy({
       billId: bill.id,
     });
-    return this.billCalculator.calcPositionsAmount(positions);
+    return (await this.billCalculator.calcBillAmount(bill, positions))
+      .amountWithTips;
   }
 
   /**
@@ -91,11 +92,15 @@ export class BillService {
     });
     if (this.isGroupChatBill(chatId, user)) {
       return await this.billMapper.printAddedPositionForGroupBill(
+        bill,
         positions,
         user.id,
       );
     } else {
-      return await this.billMapper.printAddedPositionForPrivateBill(positions);
+      return await this.billMapper.printAddedPositionForPrivateBill(
+        bill,
+        positions,
+      );
     }
   }
 
@@ -151,6 +156,19 @@ export class BillService {
       const users = await this.userService.getUsersByUserIds(userIds);
       return this.billMapper.printGroupBill(bill, positions, users);
     }
+  }
+
+  /**
+   * Задает для счета значение чаевых
+   *
+   * @param chatId идентификатор чата
+   * @param tips значение чаевых
+   */
+  async setTips(chatId: number, tips: number): Promise<string> {
+    const bill = await this.getOpenedBillByChatId(chatId);
+    bill.tips = tips;
+    await this.billRepository.save(bill);
+    return `В счет будут включены чаевые: <b>${tips}%</b>`;
   }
 
   /**

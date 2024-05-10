@@ -29,27 +29,48 @@ export class BillMapper {
   ];
 
   async printPrivateBill(bill: Bill, positions: Position[]): Promise<string> {
+    const billAmount = await this.billCalculator.calcBillAmount(
+      bill,
+      positions,
+    );
     return (
       positions
-        .map((position) => `<i>${position.name} ${position.price}</i>`)
+        .map((position) => `<i>${position.name} ${position.price} ₽</i>`)
         .join('\n') +
-      '\n ----- \n Итого: ' +
-      (await this.billCalculator.calcPositionsAmount(positions)) +
-      ' 💰.'
+      '\n -----' +
+      `\n💴 <b>Чаевые ${bill.tips}%</b>: ${billAmount.tips} ₽` +
+      `\n💳 <b>Итого без чаевых:</b> ${billAmount.amountWithoutTips} ₽` +
+      `\n💳 <b>Итого с чаевыми:</b> ${billAmount.amountWithTips} ₽`
     );
   }
 
   async printAddedPositionForPrivateBill(
-    position: Position[],
+    bill: Bill,
+    positions: Position[],
   ): Promise<string> {
-    return `✍️ Запись добавлена. \n\n 💰 Общий счет составляет <b>${await this.billCalculator.calcPositionsAmount(position)}</b>`;
+    const billAmount = await this.billCalculator.calcBillAmount(
+      bill,
+      positions,
+    );
+    return `✍️ Запись добавлена. \n\n 💳 Общий счет составляет <b>${billAmount.amountWithTips} ₽</b>`;
   }
 
   async printAddedPositionForGroupBill(
+    bill: Bill,
     positions: Position[],
     userId: number,
   ): Promise<string> {
-    return `✍️ Запись добавлена. \n\n 💰 Общий счет составляет <b>${await this.billCalculator.calcPositionsAmount(positions)}</b> \n 🫵 Твой вклад: <b>${await this.billCalculator.calcPositionsAmount(positions.filter((position) => position.userId == userId))}</b>`;
+    const commonBillAmount = await this.billCalculator.calcBillAmount(
+      bill,
+      positions,
+    );
+    const userBillAmount = await this.billCalculator.calcUserBillAmount(
+      userId,
+      bill,
+      positions,
+    );
+
+    return `✍️ Запись добавлена. \n\n 💰 Общий счет составляет <b>${commonBillAmount.amountWithTips} ₽</b> \n 🫵 Твой вклад: <b>${userBillAmount.amountWithTips} ₽</b>`;
   }
 
   async printGroupBill(
@@ -62,18 +83,37 @@ export class BillMapper {
       const userPositions = positions.filter(
         (position) => position.userId == user.id,
       );
-      billStr += `${this.getRandomPerson()} @${user.username} <b>${user.firstName} ${user.lastName}</b> : \n`;
+      billStr += '\n\n';
+      billStr += `${this.getRandomAvatar()} @${user.username} <b>${user.firstName} ${user.lastName}</b> : \n`;
       billStr += userPositions
-        .map((position) => ` <i> ${position.name} ${position.price}</i>`)
+        .map((position) => ` <i>${position.name} ${position.price}</i>`)
         .join('\n');
-      billStr += `\n💳 <b>Итого:</b> ${await this.billCalculator.calcPositionsAmount(userPositions)} \n\n`;
+      const userBillAmount = await this.billCalculator.calcBillAmount(
+        bill,
+        userPositions,
+      );
+      billStr += `\n💴 <b>Чаевые</b> ${bill.tips}%: ${userBillAmount.tips} ₽`;
+      billStr += `\n💳 <b>Итого без чаевых:</b> ${userBillAmount.amountWithoutTips} ₽`;
+      billStr += `\n💳 <b>Итого с чаевыми:</b> ${userBillAmount.amountWithTips} ₽`;
     }
-    billStr += `----\n💰 <b>Общий счет:</b> ${await this.billCalculator.calcPositionsAmount(positions)}`;
+    const commonBillAmount = await this.billCalculator.calcBillAmount(
+      bill,
+      positions,
+    );
+    billStr += '\n -----';
+    billStr += `\n💴 <b>Чаевые</b> ${bill.tips}%: ${commonBillAmount.tips} ₽`;
+    billStr += `\n💰 <b>Общий счет без чаевых:</b> ${commonBillAmount.amountWithoutTips} ₽`;
+    billStr += `\n💰 <b>Общий счет с чаевыми:</b> ${commonBillAmount.amountWithTips} ₽`;
 
     return billStr;
   }
 
-  private getRandomPerson() {
+  /**
+   * Возвращает случайный аватар для пользователя
+   *
+   * @returns Случайный аватар
+   */
+  private getRandomAvatar() {
     return this.personsEmoji[
       Math.floor(Math.random() * this.personsEmoji.length)
     ];

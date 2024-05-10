@@ -125,6 +125,33 @@ export class UpdatesHandlerService {
     );
   }
 
+  @Command('tips')
+  @Command('tips_0')
+  @Command('tips_5')
+  @Command('tips_10')
+  @Command('tips_15')
+  async setTips(
+    @Sender('first_name') firstName: string,
+    @Sender('last_name') lastName: string,
+    @Sender('username') username: string,
+    @Sender('id') telegramId: number,
+    @Message('text') text: string,
+    @ChatId() chatId: number,
+    @Ctx() ctx: Context,
+  ): Promise<void> {
+    const user = await this.userService.getOrCreateUserByTgId(
+      new UserDto(telegramId, firstName, lastName, username),
+    );
+    if (!(await this.billService.hasOpenedBill(chatId))) {
+      ctx.reply(BILL_NOT_OPENED_ERROR);
+      return;
+    }
+    const tips = parseInt(
+      text.replace('tips', '').replace('_', '').replace('/', '').trim(),
+    );
+    ctx.replyWithHTML(await await this.billService.setTips(chatId, tips));
+  }
+
   // @On('sticker')
   // async logSticker(
   //   @Sender('first_name') firstName: string,
