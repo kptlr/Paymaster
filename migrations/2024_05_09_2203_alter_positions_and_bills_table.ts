@@ -5,6 +5,8 @@ export class AlterPositionsAndBillsTableAddColumnUserIdAndChatId20240509220447
 {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
+            INSERT INTO public.users (id, telegram_id, created_at) VALUES (-1, -1, now());
+            
             ALTER TABLE public.positions
             ADD user_id int8 NOT NULL DEFAULT -1 references users(id);
 

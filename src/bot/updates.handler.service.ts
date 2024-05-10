@@ -125,6 +125,17 @@ export class UpdatesHandlerService {
     );
   }
 
+  // @On('sticker')
+  // async logSticker(
+  //   @Sender('first_name') firstName: string,
+  //   @Sender('last_name') lastName: string,
+  //   @Sender('username') username: string,
+  //   @Sender('id') telegramId: number,
+  //   @Ctx() ctx: Context,
+  // ): Promise<void> {
+  //   console.log(ctx.message);
+  // }
+
   @On('message')
   async addPosition(
     @UpdateType() updateType: TelegrafUpdateType,
@@ -155,17 +166,6 @@ export class UpdatesHandlerService {
     } catch (error) {
       ctx.replyWithMarkdownV2(INCORRECT_POSITION_FORMAT);
     }
-  }
-
-  @On('sticker')
-  async logSticker(
-    @Sender('first_name') firstName: string,
-    @Sender('last_name') lastName: string,
-    @Sender('username') username: string,
-    @Sender('id') telegramId: number,
-    @Ctx() ctx: Context,
-  ): Promise<void> {
-    console.log(ctx.message);
   }
 
   // @Command('test')
